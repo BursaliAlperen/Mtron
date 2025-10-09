@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mtron Tapper - Firebase Entegre</title>
+    <title>Mtron Tapper - Davet Sistemi Testi</title>
     
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     
@@ -11,7 +11,6 @@
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
     
     <style>
-        /* Önceki stiller (Beyaz arkaplan, mavi butonlar vb.) */
         body {
             background-color: #ffffff; 
             color: #333;
@@ -25,15 +24,32 @@
             justify-content: center;
             min-height: 100vh;
         }
+
         .container { width: 100%; max-width: 400px; padding: 20px; box-sizing: border-box; }
         h1 { color: #1a1a1a; font-size: 1.5em; margin-bottom: 20px; }
-        .balance-card { background-color: #0088cc; color: white; padding: 20px; border-radius: 12px; margin-bottom: 30px; box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15); }
+        .balance-card { 
+            background-color: #0088cc; 
+            color: white; 
+            padding: 20px; 
+            border-radius: 12px; 
+            margin-bottom: 30px; 
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15); 
+        }
         .balance-amount { font-size: 2.5em; font-weight: bold; margin: 5px 0; }
         .referral-box { background-color: #f0f0f0; border-radius: 12px; padding: 15px; margin-bottom: 20px; }
         .link-text { font-size: 0.9em; word-break: break-all; margin-bottom: 15px; font-weight: 600; }
-        #copy-button { background-color: #0088cc; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-size: 1em; transition: background-color 0.2s; width: 100%; }
+        #copy-button { 
+            background-color: #0088cc; 
+            color: white; 
+            border: none; 
+            padding: 10px 20px; 
+            border-radius: 8px; 
+            cursor: pointer; 
+            font-size: 1em; 
+            transition: background-color 0.2s; 
+            width: 100%; 
+        }
         #status-message { margin-top: 15px; font-weight: 500; color: #FFA500; }
-        /* Yükleme animasyonu */
         .loader { border: 4px solid #f3f3f3; border-top: 4px solid #3498db; border-radius: 50%; width: 20px; height: 20px; animation: spin 2s linear infinite; margin: 10px auto; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
@@ -58,9 +74,9 @@
 </div>
 
 <script>
-    // Gerçek bot kullanıcı adınız
+    // 1. YAPILANDIRMALAR
     const BOT_USERNAME = "MtronTapper_bot"; 
-
+    
     // Sizin Sağladığınız Firebase Config
     const firebaseConfig = {
         apiKey: "AIzaSyDBjyaKi_6V9S48lsga5RJfSEzxGvq4dkc",
@@ -75,7 +91,7 @@
 
     // Firebase'i Başlat
     const app = firebase.initializeApp(firebaseConfig);
-    const database = firebase.database(); // Realtime Database'i al
+    const database = firebase.database(); 
 
     document.addEventListener('DOMContentLoaded', () => {
         if (!window.Telegram || !window.Telegram.WebApp) {
@@ -89,27 +105,26 @@
         const initDataUnsafe = WebApp.initDataUnsafe;
         const currentUser = initDataUnsafe.user;
         const currentUserId = currentUser ? currentUser.id : "USER_ID_YOK";
-        const referrerCode = initDataUnsafe.start_param || null; // Davet kodu
+        const referrerCode = initDataUnsafe.start_param || null;
 
-        // 1. Davet Linkini Oluştur ve Görüntüle
+        // 2. ARAYÜZ KURULUMU
         const botLink = `https://t.me/${BOT_USERNAME}?start=${currentUserId}`; 
         document.getElementById('referral-link').textContent = botLink;
 
-        // 2. Telegram Butonlarını Ayarla
         initializeButtons(WebApp, botLink);
 
-        // 3. Kullanıcı Verisini Firebase'e Kaydet/Oku
+        // 3. DAVET VE BAKIYE MANTIĞINI BAŞLAT
         handleUserAuthentication(currentUserId, referrerCode);
     });
 
-    // --- Fonksiyonlar ---
+    // --- TEMEL FONKSİYONLAR ---
 
     function initializeButtons(WebApp, link) {
         WebApp.MainButton.setText('ARKADAŞINI DAVET ET VE PAYLAŞ');
         WebApp.MainButton.show();
         
         WebApp.MainButton.onClick(() => {
-            const shareText = `🚀 Mtron Tapper'da kazanmak için hemen katıl! İşte benim davet linkim: ${link}`;
+            const shareText = `🚀 Mtron Tapper'a gel ve kazanmaya başla! Benim davet linkim: ${link}`;
             WebApp.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(shareText)}`);
         });
 
@@ -127,25 +142,23 @@
         const statusEl = document.getElementById('status-message');
         const userRef = database.ref('users/' + userId);
 
-        // Veriyi oku ve kullanıcının varlığını kontrol et
         userRef.once('value')
             .then((snapshot) => {
                 let userData = snapshot.val();
 
                 if (userData) {
-                    // Kullanıcı Zaten Kayıtlı
-                    console.log("Kullanıcı zaten kayıtlı.", userData);
+                    // Kullanıcı Zaten Kayıtlı: Bakiye ve verileri göster
                     statusEl.textContent = `✅ Veri Alındı: Hoş geldiniz, ${userData.username || 'Kullanıcı'}!`;
                     statusEl.style.color = '#28a745'; 
                     document.getElementById('user-balance').textContent = `${userData.balance.toFixed(2)} MTRON`;
                 } else {
-                    // Yeni Kullanıcı Kaydı ve Davet Kontrolü
-                    const initialBalance = 100.00; // Başlangıç bonusu
+                    // Yeni Kullanıcı: Kaydet ve Ödüllendir
+                    const initialBalance = 100.00; // Yeni kullanıcıya başlangıç bonusu
                     userData = {
                         telegram_id: userId,
                         username: Telegram.WebApp.initDataUnsafe.user.username || 'N/A',
                         balance: initialBalance,
-                        referred_by: (referrerCode && String(referrerCode) !== String(userId)) ? referrerCode : null, // Kendi kendine daveti engelle
+                        referred_by: (referrerCode && String(referrerCode) !== String(userId)) ? referrerCode : null, 
                         referrals_count: 0,
                         created_at: firebase.database.ServerValue.TIMESTAMP
                     };
@@ -156,7 +169,7 @@
                         statusEl.style.color = '#28a745';
                         document.getElementById('user-balance').textContent = `${initialBalance.toFixed(2)} MTRON`;
 
-                        // Davet eden varsa ödüllendir (Backend mantığı simülasyonu)
+                        // Davet eden varsa: 200 Puan Bonusu Ver!
                         if (userData.referred_by) {
                             rewardReferrer(userData.referred_by, userId);
                         }
@@ -164,29 +177,29 @@
                 }
             })
             .catch(error => {
-                console.error("Firebase Hatası:", error);
-                statusEl.textContent = `❌ Firebase Hatası: ${error.message}`;
+                // Bu hata büyük ihtimalle "permission_denied" hatasıdır.
+                statusEl.innerHTML = `❌ Firebase Hatası: ${error.message}. <br> **Çözüm için Firebase Kurallarını Kontrol Edin!**`;
                 statusEl.style.color = '#dc3545';
             });
     }
 
+    // DAVET EDENE BONUS VERME FONKSİYONU
     function rewardReferrer(referrerId, newUserId) {
         const referrerRef = database.ref('users/' + referrerId);
-        const rewardAmount = 200.00; // Davet edene verilecek ödül
+        const rewardAmount = 200.00; // <-- TALEP EDİLEN 200 BONUS MİKTARI
 
         // Transaction ile güvenli bakiye artışı
         referrerRef.transaction((currentData) => {
             if (currentData) {
-                // Sadece ilk davetlerde ödüllendirmek için bir kontrol eklenebilir.
-                currentData.balance = (currentData.balance || 0) + rewardAmount;
+                currentData.balance = (currentData.balance || 0) + rewardAmount; 
                 currentData.referrals_count = (currentData.referrals_count || 0) + 1;
-                // Davet edene, kimi davet ettiğini gösteren bir alt kayıt ekleme
+                
                 if (!currentData.invited) currentData.invited = {};
                 currentData.invited[newUserId] = true; 
             }
             return currentData;
         }).then(() => {
-            console.log(`Davet eden ${referrerId} ödüllendirildi.`);
+            console.log(`Davet eden ${referrerId} 200 puan ile ödüllendirildi.`);
         }).catch(error => {
             console.error("Referans ödüllendirme hatası:", error);
         });
