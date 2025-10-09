@@ -1,439 +1,150 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="tr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-    <title>Golden Coin App - MTRON</title>
+    <title>Mtron Tapper - Davet Et Kazan</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        html, body { margin: 0; padding: 0; height: 100%; width: 100%; overflow: hidden; font-family: sans-serif; }
-        body { touch-action: none; user-select: none; }
-        .score-display { font-size: 50px; position: absolute; color: yellow; animation: fadeOut 1s forwards; pointer-events: none; }
-        @keyframes fadeOut { to { opacity: 0; transform: translateY(-30px); } }
-        .shake { animation: shake 0.5s; }
-        @keyframes shake {
-            0%, 100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 50% { transform: translateX(5px); } 75% { transform: translateX(-5px); }
+        body {
+            /* Beyaz arka plan */
+            background-color: #ffffff; 
+            color: #333;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
         }
-        /* Coin/Tap Alanı için özel stil */
-        #tap-target {
+
+        .container {
+            width: 100%;
+            max-width: 400px;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        h1 {
+            color: #1a1a1a;
+            font-size: 1.5em;
+            margin-bottom: 30px;
+        }
+
+        .referral-box {
+            background-color: #f0f0f0;
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        }
+
+        .link-text {
+            font-size: 0.9em;
+            word-break: break-all;
+            margin-bottom: 15px;
+            font-weight: 600;
+        }
+
+        #copy-button {
+            background-color: #0088cc; /* Telegram mavisi */
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
             cursor: pointer;
-            transition: transform 0.05s ease-out; /* Daha hızlı tepki için */
-            user-select: none;
-            touch-action: manipulation;
+            font-size: 1em;
+            transition: background-color 0.2s;
+            width: 100%;
         }
-        #tap-target:active {
-            transform: scale(0.95);
+
+        #copy-button:active {
+            background-color: #006da5;
         }
-        #snackbar { visibility: hidden; min-width: 250px; margin-left: -125px; background-color: rgb(15 23 42); color: #fff; text-align: center; border-radius: 24px; padding: 12px; position: fixed; z-index: 99; left: 50%; bottom: 50px; }
-        #snackbar.show { visibility: visible; -webkit-animation: fadein 0.5s, fadeout 0.5s 2.5s; animation: fadein 0.5s, fadeout 0.5s 2.5s; }
-        @-webkit-keyframes fadein { from {bottom: 0; opacity: 0;} to {bottom: 50px; opacity: 1;} }
-        @keyframes fadein { from {bottom: 0; opacity: 0;} to {bottom: 50px; opacity: 1;} }
-        @-webkit-keyframes fadeout { from {bottom: 50px; opacity: 1;} to {bottom: 0; opacity: 0;} }
-        @keyframes fadeout { from {bottom: 50px; opacity: 1;} to {bottom: 0; opacity: 0;} }
-        .page { display: none; height: 100%; width: 100%; }
-        .page.active { display: flex; flex-direction: column; }
     </style>
 </head>
-<body class="bg-gradient-to-r from-[#0f0c29] to-[#24243e]">
+<body>
+
+<div class="container">
+    <h1>Arkadaşlarını Davet Et, Ödül Kazan!</h1>
     
-    <div id="app-container" class="h-full w-full">
+    <div class="referral-box">
+        <p style="font-size: 0.8em; color: #666;">Kişisel Davet Linkiniz:</p>
+        <div id="referral-link" class="link-text">Yükleniyor...</div>
         
-        <div id="main-page" class="page active justify-center items-center p-3">
-            <div class="bg-gradient-to-r from-[#0f0c29] to-[#24243e] rounded-3xl shadow-2xl p-4 w-full h-full flex flex-col max-w-md text-white">
-                
-                <div class="flex justify-between items-center mb-4 bg-slate-900/10 rounded-3xl shadow-xl p-2">
-                    <div class="flex items-center">
-                        <i class="bi bi-person-circle w-10 h-10 text-xl mr-2 text-gray-400"></i>
-                        <span id="userName">Bota</span>
-                    </div>
-                    <button onclick="showSnackbar('Coming Soon!')" class="bg-slate-900/10 hover:bg-slate-900/20 p-2 rounded-full flex justify-between items-center">
-                        <span class="font-bold text-lg px-2">2X Coins</span>
-                    </button>
-                </div>
-                
-                <div class="text-center mb-4">
-                    <p class="text-gray-400">Your Mtron Balance</p>
-                    <div class="text-5xl font-extrabold flex justify-center items-center">
-                        <span id="score">0</span>
-                        <span class="text-2xl ml-2">Mtron</span>
-                    </div>
-                </div>
-
-                <div id="tap-area-container" class="flex-grow flex flex-col justify-center relative">
-                    <div class="text-center mb-4 mt-8">
-                        <div id="tap-target" class="w-64 h-64 mx-auto rounded-full bg-yellow-400/20 flex items-center justify-center shadow-2xl">
-                            <svg class="w-40 h-40 text-yellow-400 drop-shadow-lg" fill="currentColor" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16"/>
-                                <path d="m8.948.512 1.83 1.83.673-.672A1.895 1.895 0 0 1 12.7 0H8.381l.567.512zM15.488 7.05v-4.32L13.658 4.54l1.83 2.51zM8.381 15.999l-.567-.512-1.83-1.83-.673.672A1.895 1.895 0 0 0 3.3 16h4.38zM.512 8.948l1.83-1.83-.672-.673A1.895 1.895 0 0 0 0 3.3v4.381l.512.567z"/>
-                                <path d="M8 10a2 2 0 1 0 0-4 2 2 0 0 0 0 4"/>
-                            </svg>
-                        </div>
-                    </div>
-                </div>
-
-            </div>
-        </div>
-
-        <div id="wallet-page" class="page justify-start items-center p-3 overflow-y-auto">
-            <div class="bg-gradient-to-r from-[#0f0c29] to-[#24243e] rounded-3xl shadow-2xl p-4 w-full flex flex-col max-w-md text-white">
-                <h2 class="text-3xl font-bold mb-6 text-center text-yellow-400">Wallet</h2>
-                
-                <div class="bg-slate-900/50 p-4 rounded-2xl mb-6 shadow-xl">
-                    <p class="text-lg text-gray-400">Your Mtron Balance:</p>
-                    <p id="mtronBalanceDisplay" class="text-4xl font-extrabold mt-1">0 Mtron</p>
-                </div>
-
-                <div class="bg-slate-900/50 p-4 rounded-2xl shadow-xl mb-4">
-                    <h3 class="text-2xl font-semibold mb-4 border-b border-gray-700 pb-2">Mtron Swap</h3>
-                    <p class="text-sm text-yellow-400 mb-4">Rate: 10000 Mtron = 0.01 TRON</p>
-
-                    <label for="swapMtronInput" class="block text-sm font-medium mb-2">Mtron Amount to Swap (Min 10000):</label>
-                    <input type="number" id="swapMtronInput" min="10000" step="10000" placeholder="e.g. 10000" class="w-full p-3 mb-4 bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-yellow-500">
-                    
-                    <p class="text-lg mb-4">You will receive: <span id="tronReceiveDisplay" class="font-bold text-yellow-500">0 TRON</span></p>
-
-                    <button onclick="performSwap()" class="w-full bg-yellow-500 hover:bg-yellow-600 text-slate-900 font-bold py-3 rounded-xl transition duration-200">
-                        SWAP MTRON TO TRON
-                    </button>
-                </div>
-                
-                <div class="bg-slate-900/50 p-4 rounded-2xl shadow-xl">
-                    <h3 class="text-2xl font-semibold mb-4 border-b border-gray-700 pb-2 text-red-400">Withdraw Mtron</h3>
-                    
-                    <label for="tronAddressInput" class="block text-sm font-medium mb-2">TRON Wallet Address (TRC20):</label>
-                    <input type="text" id="tronAddressInput" placeholder="Enter your TRON Address (Starts with T)" class="w-full p-3 mb-4 bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-red-500">
-                    
-                    <label for="withdrawMtronInput" class="block text-sm font-medium mb-2">Mtron Amount to Withdraw (Min 50,000):</label>
-                    <input type="number" id="withdrawMtronInput" min="50000" step="10000" placeholder="e.g. 50000" class="w-full p-3 mb-4 bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-red-500">
-
-                    <button onclick="performWithdrawal()" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 rounded-xl transition duration-200">
-                        REQUEST WITHDRAWAL
-                    </button>
-                </div>
-            </div>
-        </div>
-
-        <div id="friends-page" class="page justify-start items-center p-3">
-            <div class="bg-gradient-to-r from-[#0f0c29] to-[#24243e] rounded-3xl shadow-2xl p-4 w-full h-full flex flex-col max-w-md text-white">
-                <h2 class="text-3xl font-bold mb-6 text-center text-green-400">Friends</h2>
-                <p class="text-center text-lg">Invite your friends and earn bonuses!</p>
-                </div>
-        </div>
-
-        <div id="admin-page" class="page justify-start items-center p-3 overflow-y-auto">
-            <div class="bg-gradient-to-r from-[#0f0c29] to-[#24243e] rounded-3xl shadow-2xl p-4 w-full flex flex-col max-w-md text-white">
-                <h2 class="text-3xl font-bold mb-6 text-center text-red-400">Admin Panel</h2>
-                <p class="text-center text-lg mb-4 text-gray-300">Welcome, Admin (<span class="text-red-400">7904032877</span>)</p>
-                
-                <div class="bg-slate-900/50 p-4 rounded-2xl mb-6 shadow-xl">
-                    <h3 class="text-xl font-semibold mb-3 border-b border-gray-700 pb-2">Pending Withdrawal Requests</h3>
-                    <div id="withdrawal-requests-list" class="space-y-3 max-h-60 overflow-y-auto">
-                        <p class="text-gray-400 text-sm" id="no-requests-msg">No pending requests.</p>
-                        </div>
-                </div>
-                
-                <div class="bg-slate-900/50 p-4 rounded-2xl shadow-xl">
-                    <h3 class="text-xl font-semibold mb-3">User Management</h3>
-                    <p class="text-sm text-gray-400 mb-4">Simulated Admin actions area.</p>
-                    <button onclick="showSnackbar('Simulated User Ban Executed')" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 rounded-xl transition duration-200 mt-2">
-                        Execute Test Action
-                    </button>
-                </div>
-                
-            </div>
-        </div>
-
+        <button id="copy-button">Link Kopyala</button>
     </div>
-
-    <div id="snackbar">Some message..</div>
-
-    <div id="bottom-navbar" class="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-slate-900/50 backdrop-blur-md p-2 rounded-t-3xl shadow-2xl flex justify-around text-white z-10">
-        <a href="#" onclick="showPage('main-page')" class="flex flex-col items-center p-2 text-yellow-400">
-            <i class="bi bi-house-door-fill w-6 h-6 text-xl"></i>
-            <span class="text-xs">Home</span>
-        </a>
-        <a href="#" onclick="showPage('wallet-page')" class="flex flex-col items-center p-2">
-            <i class="bi bi-wallet-fill w-6 h-6 text-xl"></i>
-            <span class="text-xs">Wallet</span>
-        </a>
-        <a href="#" onclick="showPage('friends-page')" class="flex flex-col items-center p-2">
-            <i class="bi bi-people-fill w-6 h-6 text-xl"></i>
-            <span class="text-xs">Friends</span>
-        </a>
-        </div>
     
-</body>
+    <p style="font-size: 0.9em; color: #555;">Bu arayüz, davet sisteminizin sadece görsel ve link oluşturma testini yapar. Arka plan ödül mantığı için backend kodunu uygulamanız gerekir.</p>
 
-<script type="module">
-    // --- FIREBASE ENTEGRASYONU ---
-    // CDN linkleri ile modül olarak Firebase SDK'larını içe aktarın
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
-    import { getAnalytics } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-analytics.js";
-    import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js";
+</div>
 
-    // Your web app's Firebase configuration
-    const firebaseConfig = {
-      apiKey: "AIzaSyDBjyaKi_6V9S48lsga5RJfSEzxGvq4dkc",
-      authDomain: "mtron-1d3c9.firebaseapp.com",
-      databaseURL: "https://mtron-1d3c9-default-rtdb.firebaseio.com",
-      projectId: "mtron-1d3c9",
-      storageBucket: "mtron-1d3c9.firebasestorage.app",
-      messagingSenderId: "735786797791",
-      appId: "1:735786797791:web:a8ede2bd403f4fd4c2776a",
-      measurementId: "G-5PEZ5DBVXH"
-    };
+<script>
+    // BİZİM YENİ BOT KULLANICI ADIMIZ
+    const BOT_USERNAME = "MtronTapper_bot"; 
 
-    // Initialize Firebase
-    const app = initializeApp(firebaseConfig);
-    const analytics = getAnalytics(app);
-
-    // --- Core Variables and Functions ---
-
-    let score = localStorage.getItem('score') ? parseInt(localStorage.getItem('score')) : 0;
-    const scoreDisplay = document.getElementById('score');
-    const tapTarget = document.getElementById('tap-target');
-    
-    // Admin ID: 7904032877
-    const ADMIN_ID = "7904032877";
-    const CURRENT_USER_ID = "7904032877"; // Simülasyon için admin olarak ayarlandı
-    
-    let withdrawalRequests = []; 
-
-    function updateBalanceDisplay() {
-        scoreDisplay.textContent = score.toLocaleString();
-        document.getElementById('mtronBalanceDisplay').textContent = score.toLocaleString() + ' Mtron';
-    }
-
-    function saveScore() {
-        localStorage.setItem('score', score);
-    }
-
-    window.showSnackbar = function(message) {
-        const snackbar = document.getElementById("snackbar");
-        snackbar.textContent = message;
-        snackbar.className = "show";
-        setTimeout(() => { snackbar.className = snackbar.className.replace("show", ""); }, 3000);
-    }
-
-    window.showPage = function(pageId) {
-        document.querySelectorAll('.page').forEach(page => {
-            page.classList.remove('active');
-        });
-        document.getElementById(pageId).classList.add('active');
-
-        // Update Nav Bar Active Link
-        document.querySelectorAll('#bottom-navbar a').forEach(link => {
-            link.classList.remove('text-yellow-400', 'text-red-400');
-            link.classList.add('text-white/70');
-        });
-
-        // İkonlar artık <i> etiketleri içinde olduğu için düzeltildi
-        let activeLink = document.querySelector(`#bottom-navbar a[onclick*="${pageId}"]`);
-        if (!activeLink && pageId === 'admin-page') {
-             activeLink = document.getElementById('admin-nav-link');
+    document.addEventListener('DOMContentLoaded', () => {
+        if (!window.Telegram || !window.Telegram.WebApp) {
+            console.error("Telegram WebApp SDK yüklenemedi. Bu sayfa sadece Telegram Mini Uygulaması içinde çalışır.");
+            // Test amaçlı sahte ID kullan
+            initializeReferralSystem("123456789"); 
+            return;
         }
+        
+        const WebApp = window.Telegram.WebApp;
+        WebApp.ready();
 
-        if (activeLink) {
-            activeLink.classList.remove('text-white/70');
-            activeLink.classList.add(pageId === 'admin-page' ? 'text-red-400' : 'text-yellow-400');
-            if (pageId === 'admin-page' && CURRENT_USER_ID === ADMIN_ID) {
-                renderWithdrawalRequests();
-            }
-        }
-    }
+        const initDataUnsafe = WebApp.initDataUnsafe;
 
-    // --- Tap Logic (Tıklama Sorunu Giderildi) ---
-    // Tıklama event'i tap-target div'ine eklendi.
-    tapTarget.addEventListener('click', (event) => {
-        score += 1;
-        updateBalanceDisplay();
-        saveScore();
+        // Kullanıcı ID'sini al
+        const currentUserId = initDataUnsafe.user ? initDataUnsafe.user.id : "USER_ID_YOK";
 
-        // Add visual feedback
-        tapTarget.classList.add('shake');
-        setTimeout(() => { tapTarget.classList.remove('shake'); }, 500);
-
-        // Display +1 score animation at click position
-        const rect = tapTarget.getBoundingClientRect();
-        const display = document.createElement('div');
-        display.className = 'score-display';
-        display.textContent = '+1';
-        display.style.left = `${event.clientX - rect.left}px`;
-        display.style.top = `${event.clientY - rect.top}px`;
-        display.style.transform = `translate(-50%, -50%)`;
-        document.getElementById('tap-area-container').appendChild(display);
-
-        setTimeout(() => {
-            display.remove();
-        }, 1000);
+        initializeReferralSystem(currentUserId);
+        initializeTelegramButtons(WebApp);
     });
 
-    // --- SWAP LOGIC (Wallet) ---
-    const SWAP_RATE = 0.01 / 10000;
-
-    function calculateTron(mtronAmount) {
-        return mtronAmount * SWAP_RATE;
-    }
-
-    function updateTronDisplay() {
-        const mtronInput = document.getElementById('swapMtronInput');
-        const tronDisplay = document.getElementById('tronReceiveDisplay');
-        const mtronAmount = parseFloat(mtronInput.value) || 0;
+    function initializeReferralSystem(userId) {
+        const referralLinkElement = document.getElementById('referral-link');
+        // Bot kullanıcı adınız ile linki oluşturun
+        const botLink = `https://t.me/${BOT_USERNAME}?start=${userId}`; 
         
-        const tronAmount = calculateTron(mtronAmount);
-        tronDisplay.textContent = `${tronAmount.toFixed(4)} TRON`;
-    }
-    
-    window.performSwap = function() {
-        const mtronInput = document.getElementById('swapMtronInput');
-        const mtronAmount = parseFloat(mtronInput.value);
+        // Linki arayüze yaz
+        referralLinkElement.textContent = botLink;
 
-        if (isNaN(mtronAmount) || mtronAmount < 10000 || mtronAmount % 10000 !== 0) {
-            showSnackbar("Minimum swap amount is 10,000 Mtron and must be in multiples of 10,000.");
-            return;
-        }
-        
-        if (score < mtronAmount) {
-             showSnackbar("Insufficient Mtron balance for this swap!");
-             return;
-        }
-
-        const tronAmount = calculateTron(mtronAmount);
-        
-        score -= mtronAmount;
-        updateBalanceDisplay();
-        saveScore(); 
-        
-        showSnackbar(`${mtronAmount} Mtron swapped for ${tronAmount.toFixed(4)} TRON! (Simulated)`);
-        mtronInput.value = '';
-        updateTronDisplay();
-    }
-    
-    // --- WITHDRAWAL LOGIC (Wallet) ---
-    function isValidTronAddress(address) {
-        return typeof address === 'string' && address.length === 34 && address.startsWith('T');
-    }
-
-    window.performWithdrawal = function() {
-        const tronAddressInput = document.getElementById('tronAddressInput');
-        const withdrawMtronInput = document.getElementById('withdrawMtronInput');
-        
-        const address = tronAddressInput.value.trim();
-        const mtronAmount = parseFloat(withdrawMtronInput.value);
-
-        const MIN_WITHDRAWAL = 50000;
-
-        if (!isValidTronAddress(address)) {
-            showSnackbar("Please enter a valid TRON address (starts with T, 34 characters).");
-            return;
-        }
-
-        if (isNaN(mtronAmount) || mtronAmount < MIN_WITHDRAWAL || mtronAmount % 10000 !== 0) {
-            showSnackbar(`Minimum withdrawal is ${MIN_WITHDRAWAL.toLocaleString()} Mtron and must be in multiples of 10,000.`);
-            return;
-        }
-        
-        if (score < mtronAmount) {
-             showSnackbar("Insufficient Mtron balance for this withdrawal!");
-             return;
-        }
-
-        score -= mtronAmount;
-        updateBalanceDisplay();
-        saveScore(); 
-        
-        const requestId = Date.now().toString();
-        const request = {
-            id: requestId,
-            userId: CURRENT_USER_ID, 
-            userName: document.getElementById('userName').textContent,
-            tronAddress: address,
-            amountMtron: mtronAmount,
-            status: 'Pending',
-            timestamp: new Date().toLocaleString()
-        };
-
-        withdrawalRequests.push(request);
-
-        tronAddressInput.value = '';
-        withdrawMtronInput.value = '';
-
-        showSnackbar(`${mtronAmount.toLocaleString()} Mtron withdrawal request submitted successfully. (Admin Panel'e düştü)`);
-    }
-
-    // --- ADMIN PANEL LOGIC ---
-    
-    function renderWithdrawalRequests() {
-        const listContainer = document.getElementById('withdrawal-requests-list');
-        listContainer.innerHTML = ''; 
-
-        if (withdrawalRequests.length === 0) {
-            listContainer.insertAdjacentHTML('beforeend', '<p class="text-gray-400 text-sm" id="no-requests-msg">No pending requests.</p>');
-            return;
-        }
-
-        withdrawalRequests.forEach(request => {
-            const requestHtml = `
-                <div id="request-${request.id}" class="p-3 bg-slate-800 rounded-lg border border-gray-700">
-                    <p class="font-bold text-yellow-400">${request.amountMtron.toLocaleString()} Mtron</p>
-                    <p class="text-sm text-gray-300 truncate">Address: ${request.tronAddress}</p>
-                    <p class="text-xs text-gray-400 mt-1">User: ${request.userName} (ID: ${request.userId})</p>
-                    <p class="text-xs text-gray-500">Submitted: ${request.timestamp}</p>
-                    <button onclick="processRequest('${request.id}', 'Completed')" class="mt-2 text-xs font-semibold bg-green-600 hover:bg-green-700 px-3 py-1 rounded">
-                        Mark as Completed (Simulate)
-                    </button>
-                    <button onclick="processRequest('${request.id}', 'Rejected')" class="mt-2 ml-2 text-xs font-semibold bg-red-600 hover:bg-red-700 px-3 py-1 rounded">
-                        Reject (Simulate)
-                    </button>
-                </div>
-            `;
-            listContainer.insertAdjacentHTML('beforeend', requestHtml);
+        // Kopyalama butonuna işlevsellik ekle
+        document.getElementById('copy-button').addEventListener('click', () => {
+            // Davet linkini kopyalama
+            navigator.clipboard.writeText(botLink).then(() => {
+                Telegram.WebApp.showPopup({
+                    message: "Davet linki başarıyla kopyalandı!",
+                    buttons: [{ id: 'ok', type: 'ok', text: 'Tamam' }]
+                });
+            }).catch(err => {
+                console.error('Kopyalama hatası:', err);
+                Telegram.WebApp.showAlert('Link kopyalanamadı. Lütfen manuel kopyalayın.');
+            });
         });
     }
 
-    window.processRequest = function(requestId, newStatus) {
-        const index = withdrawalRequests.findIndex(req => req.id === requestId);
-        if (index > -1) {
-            const request = withdrawalRequests[index];
-            request.status = newStatus;
-            withdrawalRequests.splice(index, 1);
+    function initializeTelegramButtons(WebApp) {
+        // Telegram Main Button'ı ayarla
+        WebApp.MainButton.setText('ARKADAŞINI DAVET ET VE PAYLAŞ');
+        WebApp.MainButton.show();
+        
+        WebApp.MainButton.onClick(() => {
+            // Main Button'a tıklandığında paylaşım linkini içeren metni hazırla
+            const shareLink = document.getElementById('referral-link').textContent;
+            const shareText = `💰 Mtron Tapper'da kazanmak için hemen katıl! İşte benim davet linkim: ${shareLink}`;
             
-            showSnackbar(`Request ${requestId} ${newStatus}. (Admin action simulated)`);
-            renderWithdrawalRequests();
-        }
+            // Telegram'ın kendi paylaşım arayüzünü aç
+            // openTelegramLink, kullanıcının bu metni hangi sohbete göndereceğini seçmesini sağlar.
+            WebApp.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(shareText)}`);
+        });
     }
-
-    // --- ADMIN PANEL VISIBILITY LOGIC ---
-    
-    function setupAdminPanel() {
-        if (CURRENT_USER_ID === ADMIN_ID) {
-            const navbar = document.getElementById('bottom-navbar');
-            const adminLink = `
-                <a href="#" id="admin-nav-link" onclick="showPage('admin-page')" class="flex flex-col items-center p-2 text-white/70">
-                    <i class="bi bi-gear-fill w-6 h-6 text-xl"></i>
-                    <span class="text-xs">Admin</span>
-                </a>
-            `;
-            navbar.insertAdjacentHTML('beforeend', adminLink);
-        }
-    }
-
-    // --- Initialization ---
-    window.onload = function() {
-        updateBalanceDisplay();
-        setupAdminPanel();
-        showPage('main-page');
-        
-        const mtronInput = document.getElementById('swapMtronInput');
-        if (mtronInput) {
-            mtronInput.addEventListener('input', updateTronDisplay);
-        }
-        
-        if (CURRENT_USER_ID === ADMIN_ID) {
-            document.getElementById('admin-nav-link')?.classList.add('text-red-400');
-        }
-    };
 
 </script>
+</body>
 </html>
