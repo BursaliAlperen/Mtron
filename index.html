@@ -3,207 +3,195 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mtron Tapper - Davet Sistemi Testi</title>
-    
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    
-    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
-    
+    <title>VPN Kazanç Simülatörü (Kurgusal)</title>
     <style>
+        /* CSS Başlangıcı */
         body {
-            background-color: #ffffff; 
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
             color: #333;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
             margin: 0;
             padding: 20px;
-            text-align: center;
             display: flex;
-            flex-direction: column;
-            align-items: center;
             justify-content: center;
+            align-items: center;
             min-height: 100vh;
         }
-
-        .container { width: 100%; max-width: 400px; padding: 20px; box-sizing: border-box; }
-        h1 { color: #1a1a1a; font-size: 1.5em; margin-bottom: 20px; }
-        .balance-card { 
-            background-color: #0088cc; 
-            color: white; 
-            padding: 20px; 
-            border-radius: 12px; 
-            margin-bottom: 30px; 
-            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15); 
+        .container {
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 450px;
         }
-        .balance-amount { font-size: 2.5em; font-weight: bold; margin: 5px 0; }
-        .referral-box { background-color: #f0f0f0; border-radius: 12px; padding: 15px; margin-bottom: 20px; }
-        .link-text { font-size: 0.9em; word-break: break-all; margin-bottom: 15px; font-weight: 600; }
-        #copy-button { 
-            background-color: #0088cc; 
-            color: white; 
-            border: none; 
-            padding: 10px 20px; 
-            border-radius: 8px; 
-            cursor: pointer; 
-            font-size: 1em; 
-            transition: background-color 0.2s; 
-            width: 100%; 
+        h1 {
+            color: #4CAF50;
+            text-align: center;
+            margin-bottom: 20px;
         }
-        #status-message { margin-top: 15px; font-weight: 500; color: #FFA500; }
-        .loader { border: 4px solid #f3f3f3; border-top: 4px solid #3498db; border-radius: 50%; width: 20px; height: 20px; animation: spin 2s linear infinite; margin: 10px auto; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .info-box {
+            background-color: #e8f5e9;
+            border: 1px solid #4CAF50;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        .info-box p {
+            margin: 5px 0;
+            font-size: 1.1em;
+        }
+        .info-box strong {
+            color: #2e7d32;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
+        select, button {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 15px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-size: 1.1em;
+            transition: background-color 0.3s ease;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .warning {
+            background-color: #ffebee;
+            color: #c62828;
+            padding: 10px;
+            border-radius: 5px;
+            text-align: center;
+            font-size: 0.9em;
+            margin-top: 20px;
+            border: 1px solid #c62828;
+        }
+        /* CSS Bitişi */
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1>Mtron Tapper Davet Alanı</h1>
-
-    <div class="balance-card">
-        <p style="margin: 0; font-size: 1em;">MEVCUT BAKİYENİZ</p>
-        <div id="user-balance" class="balance-amount">0.00 MTRON</div>
-    </div>
-    
-    <div class="referral-box">
-        <p style="font-size: 0.8em; color: #666;">Kişisel Davet Linkiniz:</p>
-        <div id="referral-link" class="link-text">Yükleniyor...</div>
-        <button id="copy-button">Link Kopyala</button>
+    <div class="warning">
+        **UYARI:** Bu, yalnızca bir **TEST ve KURGUSAL** simülasyondur. Gerçek platformlarda VPN kullanarak kazanç artırmaya çalışmak, hizmet koşullarını ihlal edebilir.
     </div>
 
-    <div id="status-message">Firebase'den veri bekleniyor... <div class="loader"></div></div>
+    <h1>VPN Kazanç Simülasyonu</h1>
+
+    <label for="vpnCountry">VPN Konumunu Seçin (Türkiye'den Deneme):</label>
+    <select id="vpnCountry">
+        <option value="TR">Türkiye (Varsayılan - 1X)</option>
+        <option value="AU">Avustralya (2.5X)</option>
+        <option value="KW">Kuveyt (3.0X)</option>
+        <option value="GE">Gürcistan (1.5X)</option>
+        <option value="DE">Almanya (2.0X)</option>
+        <option value="IN">Hindistan (0.5X)</option>
+    </select>
+
+    <div class="info-box">
+        <p>Mevcut Konum: <strong id="currentLocation">Türkiye</strong></p>
+        <p>Konum Çarpanı: <strong id="multiplier">1.0X</strong></p>
+        <p>1 Reklam Kazancı: <strong id="earningPerAd">$0.01</strong></p>
+    </div>
+
+    <button id="watchAdButton">Reklam İzle ve Kazan (TEST)</button>
+
+    <h2>Toplam Kurgusal Kazanç: <span id="totalEarnings">$0.00</span></h2>
 </div>
 
 <script>
-    // 1. YAPILANDIRMALAR
-    const BOT_USERNAME = "MtronTapper_bot"; 
-    
-    // Sizin Sağladığınız Firebase Config
-    const firebaseConfig = {
-        apiKey: "AIzaSyDBjyaKi_6V9S48lsga5RJfSEzxGvq4dkc",
-        authDomain: "mtron-1d3c9.firebaseapp.com",
-        databaseURL: "https://mtron-1d3c9-default-rtdb.firebaseio.com",
-        projectId: "mtron-1d3c9",
-        storageBucket: "mtron-1d3c9.firebasestorage.app",
-        messagingSenderId: "735786797791",
-        appId: "1:735786797791:web:a8ede2bd403f4fd4c2776a",
-        measurementId: "G-5PEZ5DBVXH"
+    // JavaScript Başlangıcı
+
+    // --- Kurgusal Kazanç Verileri ---
+    const BASE_EARNING = 0.01; // Türkiye'deki varsayılan kazanç: $0.01
+    const multipliers = {
+        'TR': 1.0,
+        'AU': 2.5,  // Avustralya - Sizin istediğiniz 2X'in üstü
+        'KW': 3.0,  // Kuveyt
+        'GE': 1.5,  // Gürcistan
+        'DE': 2.0,
+        'IN': 0.5
     };
 
-    // Firebase'i Başlat
-    const app = firebase.initializeApp(firebaseConfig);
-    const database = firebase.database(); 
+    const countryNames = {
+        'TR': 'Türkiye',
+        'AU': 'Avustralya',
+        'KW': 'Kuveyt',
+        'GE': 'Gürcistan',
+        'DE': 'Almanya',
+        'IN': 'Hindistan'
+    };
 
-    document.addEventListener('DOMContentLoaded', () => {
-        if (!window.Telegram || !window.Telegram.WebApp) {
-            document.getElementById('status-message').textContent = "HATA: Telegram SDK yüklenemedi.";
-            return;
-        }
+    // --- DOM Elementleri ---
+    const vpnCountrySelect = document.getElementById('vpnCountry');
+    const currentLocationText = document.getElementById('currentLocation');
+    const multiplierText = document.getElementById('multiplier');
+    const earningPerAdText = document.getElementById('earningPerAd');
+    const watchAdButton = document.getElementById('watchAdButton');
+    const totalEarningsText = document.getElementById('totalEarnings');
+
+    let totalEarnings = 0.00;
+
+    // --- Fonksiyonlar ---
+
+    /**
+     * Seçilen ülkeye göre kazanç oranlarını günceller.
+     */
+    function updateEarnings() {
+        const selectedCode = vpnCountrySelect.value;
+        const currentMultiplier = multipliers[selectedCode];
+        const currentCountryName = countryNames[selectedCode];
         
-        const WebApp = window.Telegram.WebApp;
-        WebApp.ready();
-
-        const initDataUnsafe = WebApp.initDataUnsafe;
-        const currentUser = initDataUnsafe.user;
-        const currentUserId = currentUser ? currentUser.id : "USER_ID_YOK";
-        const referrerCode = initDataUnsafe.start_param || null;
-
-        // 2. ARAYÜZ KURULUMU
-        const botLink = `https://t.me/${BOT_USERNAME}?start=${currentUserId}`; 
-        document.getElementById('referral-link').textContent = botLink;
-
-        initializeButtons(WebApp, botLink);
-
-        // 3. DAVET VE BAKIYE MANTIĞINI BAŞLAT
-        handleUserAuthentication(currentUserId, referrerCode);
-    });
-
-    // --- TEMEL FONKSİYONLAR ---
-
-    function initializeButtons(WebApp, link) {
-        WebApp.MainButton.setText('ARKADAŞINI DAVET ET VE PAYLAŞ');
-        WebApp.MainButton.show();
+        // Yeni kazanç hesaplanır
+        const earning = BASE_EARNING * currentMultiplier;
         
-        WebApp.MainButton.onClick(() => {
-            const shareText = `🚀 Mtron Tapper'a gel ve kazanmaya başla! Benim davet linkim: ${link}`;
-            WebApp.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(shareText)}`);
-        });
-
-        document.getElementById('copy-button').addEventListener('click', () => {
-            navigator.clipboard.writeText(link).then(() => {
-                WebApp.showPopup({
-                    message: "Davet linki kopyalandı!",
-                    buttons: [{ id: 'ok', type: 'ok', text: 'Tamam' }]
-                });
-            });
-        });
+        // Arayüz güncellenir
+        currentLocationText.textContent = currentCountryName;
+        multiplierText.textContent = `${currentMultiplier.toFixed(1)}X`;
+        earningPerAdText.textContent = `$${earning.toFixed(3)}`;
     }
 
-    async function handleUserAuthentication(userId, referrerCode) {
-        const statusEl = document.getElementById('status-message');
-        const userRef = database.ref('users/' + userId);
+    /**
+     * Reklam izleme işlemini simüle eder ve kazancı ekler.
+     */
+    function watchAd() {
+        const selectedCode = vpnCountrySelect.value;
+        const currentMultiplier = multipliers[selectedCode];
+        const currentEarning = BASE_EARNING * currentMultiplier;
+        
+        totalEarnings += currentEarning;
 
-        userRef.once('value')
-            .then((snapshot) => {
-                let userData = snapshot.val();
-
-                if (userData) {
-                    // Kullanıcı Zaten Kayıtlı: Bakiye ve verileri göster
-                    statusEl.textContent = `✅ Veri Alındı: Hoş geldiniz, ${userData.username || 'Kullanıcı'}!`;
-                    statusEl.style.color = '#28a745'; 
-                    document.getElementById('user-balance').textContent = `${userData.balance.toFixed(2)} MTRON`;
-                } else {
-                    // Yeni Kullanıcı: Kaydet ve Ödüllendir
-                    const initialBalance = 100.00; // Yeni kullanıcıya başlangıç bonusu
-                    userData = {
-                        telegram_id: userId,
-                        username: Telegram.WebApp.initDataUnsafe.user.username || 'N/A',
-                        balance: initialBalance,
-                        referred_by: (referrerCode && String(referrerCode) !== String(userId)) ? referrerCode : null, 
-                        referrals_count: 0,
-                        created_at: firebase.database.ServerValue.TIMESTAMP
-                    };
-
-                    // Yeni kullanıcıyı kaydet
-                    return userRef.set(userData).then(() => {
-                        statusEl.textContent = `🎉 Yeni Kayıt! Başlangıç bonusu verildi.`;
-                        statusEl.style.color = '#28a745';
-                        document.getElementById('user-balance').textContent = `${initialBalance.toFixed(2)} MTRON`;
-
-                        // Davet eden varsa: 200 Puan Bonusu Ver!
-                        if (userData.referred_by) {
-                            rewardReferrer(userData.referred_by, userId);
-                        }
-                    });
-                }
-            })
-            .catch(error => {
-                // Bu hata büyük ihtimalle "permission_denied" hatasıdır.
-                statusEl.innerHTML = `❌ Firebase Hatası: ${error.message}. <br> **Çözüm için Firebase Kurallarını Kontrol Edin!**`;
-                statusEl.style.color = '#dc3545';
-            });
+        // Toplam kazancı günceller ve 2 ondalık basamağa yuvarlar
+        totalEarningsText.textContent = `$${totalEarnings.toFixed(2)}`;
+        
+        // Kullanıcıya geri bildirim
+        alert(`${countryNames[selectedCode]} konumundan reklam izlediniz. Hesabınıza $${currentEarning.toFixed(3)} eklendi!`);
     }
 
-    // DAVET EDENE BONUS VERME FONKSİYONU
-    function rewardReferrer(referrerId, newUserId) {
-        const referrerRef = database.ref('users/' + referrerId);
-        const rewardAmount = 200.00; // <-- TALEP EDİLEN 200 BONUS MİKTARI
+    // --- Olay Dinleyicileri ---
+    // Seçim değiştiğinde kazanç bilgisini güncelle
+    vpnCountrySelect.addEventListener('change', updateEarnings);
+    
+    // Butona tıklandığında kazanç ekle
+    watchAdButton.addEventListener('click', watchAd);
 
-        // Transaction ile güvenli bakiye artışı
-        referrerRef.transaction((currentData) => {
-            if (currentData) {
-                currentData.balance = (currentData.balance || 0) + rewardAmount; 
-                currentData.referrals_count = (currentData.referrals_count || 0) + 1;
-                
-                if (!currentData.invited) currentData.invited = {};
-                currentData.invited[newUserId] = true; 
-            }
-            return currentData;
-        }).then(() => {
-            console.log(`Davet eden ${referrerId} 200 puan ile ödüllendirildi.`);
-        }).catch(error => {
-            console.error("Referans ödüllendirme hatası:", error);
-        });
-    }
+    // İlk yüklemede arayüzü başlat
+    updateEarnings();
+    
+    // JavaScript Bitişi
 </script>
+
 </body>
 </html>
